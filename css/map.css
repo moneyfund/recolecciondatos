@@ -1,4 +1,5 @@
 /* GeoCampo · Mapa de precisión */
+.workspace-grid{align-items:start}
 .map-section{margin-top:14px;border:1px solid #dfe7ef;border-radius:17px;background:#fff;overflow:hidden;box-shadow:0 7px 24px rgba(7,26,51,.045)}
 .map-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 13px;border-bottom:1px solid #e8edf3;background:linear-gradient(180deg,#fff,#fbfcfe)}
 .map-title{min-width:0}.map-title span{display:block;font-size:7.5px;letter-spacing:.13em;font-weight:800;color:#93a0af;margin-bottom:3px}.map-title strong{display:block;font-size:11px;color:var(--navy);letter-spacing:-.01em}
