@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#071a33" />
+  <meta name="description" content="Herramienta de recolección georreferenciada para levantamiento de campo de tesis de ingeniería civil." />
+  <title>GeoCampo | Recolección de Datos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./index.html" aria-label="GeoCampo inicio">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        </span>
+        <span>
+          <strong>GeoCampo</strong>
+          <small>Control de levantamiento</small>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <span class="connection-pill" id="connectionStatus"><span></span> Sincronización local</span>
+        <a class="icon-btn" href="./admin.html" title="Panel administrativo" aria-label="Panel administrativo">
+          <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero fade-up">
+        <div class="hero-copy">
+          <span class="eyebrow">LEVANTAMIENTO DE CAMPO · TESIS</span>
+          <h1>Registra evidencia <span>precisa</span>, donde ocurre.</h1>
+          <p>Captura fotografías con coordenadas, precisión GPS, fecha, hora y observaciones desde un solo formulario optimizado para móvil.</p>
+        </div>
+        <div class="hero-status glass-card">
+          <div class="status-icon pulse-dot">
+            <svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          </div>
+          <div><strong id="gpsHeroTitle">GPS listo para iniciar</strong><small id="gpsHeroSubtitle">Activa la ubicación al crear un registro</small></div>
+        </div>
+      </section>
+
+      <section class="workspace-grid">
+        <article class="card capture-card fade-up delay-1">
+          <div class="section-heading">
+            <div>
+              <span class="step-badge">01</span>
+              <h2>Evidencia fotográfica</h2>
+              <p>Toma una fotografía directamente con la cámara del dispositivo.</p>
+            </div>
+            <span class="required-label">REQUERIDO</span>
+          </div>
+
+          <label class="camera-zone" id="cameraZone" for="photoInput">
+            <input id="photoInput" type="file" accept="image/*" capture="environment" hidden />
+            <img id="photoPreview" alt="Vista previa de la fotografía" hidden />
+            <div class="camera-placeholder" id="cameraPlaceholder">
+              <span class="camera-icon">
+                <svg viewBox="0 0 24 24"><path d="M4 7h3l1.5-2h7L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg>
+              </span>
+              <strong>Tomar fotografía</strong>
+              <small>Usa la cámara trasera para documentar el punto</small>
+            </div>
+            <button type="button" id="replacePhotoBtn" class="floating-photo-action" hidden>Cambiar foto</button>
+          </label>
+        </article>
+
+        <article class="card location-card fade-up delay-2">
+          <div class="section-heading compact">
+            <div>
+              <span class="step-badge">02</span>
+              <h2>Ubicación del punto</h2>
+            </div>
+            <button class="text-btn" id="refreshLocationBtn" type="button">Actualizar</button>
+          </div>
+
+          <div class="location-state" id="locationState">
+            <span class="location-orb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg></span>
+            <div><strong>Esperando ubicación</strong><small>Presiona “Obtener GPS” para registrar las coordenadas.</small></div>
+          </div>
+
+          <button type="button" class="btn btn-primary btn-full" id="getLocationBtn">
+            <svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            Obtener GPS
+          </button>
+
+          <div class="coordinates-grid" id="coordinatesGrid">
+            <div><span>LATITUD</span><strong id="latitudeValue">—</strong></div>
+            <div><span>LONGITUD</span><strong id="longitudeValue">—</strong></div>
+            <div><span>PRECISIÓN</span><strong id="accuracyValue">—</strong></div>
+            <div><span>CALIDAD GPS</span><strong id="qualityValue">—</strong></div>
+          </div>
+        </article>
+
+        <article class="card details-card fade-up delay-2">
+          <div class="section-heading">
+            <div>
+              <span class="step-badge">03</span>
+              <h2>Datos del registro</h2>
+              <p>Completa la información útil para el análisis posterior.</p>
+            </div>
+          </div>
+
+          <form id="recordForm" class="record-form">
+            <div class="field-row">
+              <label class="field"><span>Tipo de elemento</span><select id="type" required><option value="">Seleccionar</option><option>Señal vertical</option><option>Señal horizontal</option><option>Dispositivo de seguridad</option><option>Intersección</option><option>Acceso</option><option>Obra de drenaje</option><option>Condición de vía</option><option>Otro</option></select></label>
+              <label class="field"><span>Estado</span><select id="status"><option value="No evaluado">No evaluado</option><option>Bueno</option><option>Regular</option><option>Deficiente</option><option>Crítico</option></select></label>
+            </div>
+            <div class="field-row">
+              <label class="field"><span>Tramo / sector</span><input id="section" type="text" placeholder="Ej. Km 12+500 – Km 13+000" /></label>
+              <label class="field"><span>Sentido</span><select id="direction"><option value="">Seleccionar</option><option>Ida</option><option>Retorno</option><option>Ambos sentidos</option><option>No aplica</option></select></label>
+            </div>
+            <label class="field"><span>Observaciones</span><textarea id="observation" rows="4" placeholder="Describe el hallazgo, condición, riesgo o detalle relevante..."></textarea></label>
+
+            <div class="capture-metadata">
+              <div><span>FECHA</span><strong id="dateValue">—</strong></div>
+              <div><span>HORA</span><strong id="timeValue">—</strong></div>
+              <div><span>MODO</span><strong>Campo</strong></div>
+            </div>
+
+            <button class="btn btn-primary btn-large btn-full" id="saveBtn" type="submit">
+              <svg viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"/></svg>
+              Guardar registro
+            </button>
+            <p class="form-hint">En esta versión inicial, los datos se conservan localmente en este dispositivo hasta conectar Firebase.</p>
+          </form>
+        </article>
+      </section>
+
+      <section class="recent-section fade-up delay-3">
+        <div class="section-title-row">
+          <div><span class="eyebrow">SESION ACTUAL</span><h2>Registros recientes</h2></div>
+          <a href="./admin.html" class="text-link">Ver panel completo <span>→</span></a>
+        </div>
+        <div id="recentRecords" class="records-list"></div>
+        <div id="emptyState" class="empty-state">
+          <span><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg></span>
+          <strong>Aún no hay registros</strong>
+          <p>Tu primera evidencia georreferenciada aparecerá aquí.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer><span>GeoCampo · Ingeniería Civil</span><span>v0.1 · Preparado para Firebase + Vercel</span></footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastIcon">✓</span><p id="toastMessage">Registro guardado</p></div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
