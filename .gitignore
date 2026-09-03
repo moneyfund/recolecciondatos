@@ -1,0 +1,14 @@
+# Firebase local configuration
+js/firebase-config.js
+.firebase/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Dependencies / tooling
+node_modules/
+.vercel/
+.DS_Store
+Thumbs.db
