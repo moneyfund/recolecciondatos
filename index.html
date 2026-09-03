@@ -9,7 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/map.css" />
 </head>
 <body>
   <div class="page-glow page-glow-one"></div>
@@ -69,7 +71,7 @@
           </div>
           <div class="console-features">
             <div><span class="feature-icon">01</span><p><strong>Fotografía</strong><small>Cámara del dispositivo</small></p></div>
-            <div><span class="feature-icon">02</span><p><strong>Coordenadas</strong><small>Latitud y longitud</small></p></div>
+            <div><span class="feature-icon">02</span><p><strong>Coordenadas</strong><small>GPS + ajuste visual</small></p></div>
             <div><span class="feature-icon">03</span><p><strong>Ficha técnica</strong><small>Observación y estado</small></p></div>
           </div>
         </aside>
@@ -115,7 +117,7 @@
           <div class="section-heading compact">
             <div class="heading-main">
               <span class="step-badge">02</span>
-              <div><h2>Ubicación del punto</h2><p>Captura las coordenadas en el lugar exacto.</p></div>
+              <div><h2>Ubicación del punto</h2><p>GPS automático con verificación y ajuste sobre mapa.</p></div>
             </div>
             <button class="text-btn" id="refreshLocationBtn" type="button">Actualizar</button>
           </div>
@@ -125,16 +127,43 @@
             <div><strong>Esperando ubicación</strong><small>Obtén la señal GPS cuando estés frente al punto que documentas.</small></div>
           </div>
 
+          <div class="gps-progress" id="gpsProgress" aria-hidden="true"><span></span></div>
+
           <button type="button" class="btn btn-primary btn-full gps-button" id="getLocationBtn">
             <svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>
-            Obtener GPS
+            Obtener GPS de alta precisión
           </button>
+
+          <div class="map-section">
+            <div class="map-toolbar">
+              <div class="map-title"><span>VERIFICACIÓN ESPACIAL</span><strong>Mapa de posicionamiento</strong></div>
+              <div class="map-layer-switch" aria-label="Capa del mapa">
+                <button type="button" class="map-layer-btn active" id="satelliteLayerBtn">Satélite</button>
+                <button type="button" class="map-layer-btn" id="streetLayerBtn">Calles</button>
+              </div>
+            </div>
+            <div id="fieldMap" class="field-map" aria-label="Mapa para verificar y ajustar la ubicación"><span class="map-crosshair" aria-hidden="true"></span></div>
+            <div class="map-footer">
+              <div class="map-status" id="mapStatus">
+                <span class="map-status-dot"></span>
+                <div><strong id="mapStatusTitle">Mapa listo</strong><small id="mapStatusText">Obtén el GPS para centrar el punto automáticamente.</small></div>
+              </div>
+              <div class="map-actions">
+                <button type="button" class="map-action-btn" id="restoreGpsBtn" disabled>Volver al GPS</button>
+                <button type="button" class="map-action-btn primary" id="manualModeBtn" disabled>Ajustar manualmente</button>
+              </div>
+            </div>
+          </div>
+          <div class="manual-help" id="manualHelp" hidden>
+            <svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            <span>Arrastra el marcador o toca un punto del mapa. Se conservará la lectura GPS original y se registrará la distancia del ajuste manual.</span>
+          </div>
 
           <div class="coordinates-grid" id="coordinatesGrid">
             <div><span>LATITUD</span><strong id="latitudeValue">—</strong></div>
             <div><span>LONGITUD</span><strong id="longitudeValue">—</strong></div>
-            <div><span>PRECISIÓN</span><strong id="accuracyValue">—</strong></div>
-            <div><span>CALIDAD GPS</span><strong id="qualityValue">—</strong></div>
+            <div><span>PRECISIÓN GPS</span><strong id="accuracyValue">—</strong></div>
+            <div><span>MÉTODO</span><strong id="qualityValue">—</strong></div>
           </div>
         </article>
 
@@ -190,11 +219,12 @@
       </section>
     </main>
 
-    <footer><span>GeoCampo · Ingeniería Civil</span><span>v0.1 · Preparado para Firebase + Vercel</span></footer>
+    <footer><span>GeoCampo · Ingeniería Civil</span><span>v0.2 · GPS + verificación cartográfica</span></footer>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastIcon">✓</span><p id="toastMessage">Registro guardado</p></div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>
