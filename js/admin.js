@@ -1,3 +1,5 @@
+import './auth-gate.js';
+
 const STORAGE_KEY = 'geocampo_records_v01';
 const $ = (id) => document.getElementById(id);
 
@@ -81,7 +83,7 @@ function filteredRecords() {
   const search = els.searchInput.value.trim().toLowerCase();
   const type = els.typeFilter.value;
   return getRecords().filter(record => {
-    const haystack = `${record.type} ${record.section} ${record.observation} ${record.status} ${record.id} ${positioningLabel(record)}`.toLowerCase();
+    const haystack = `${record.type} ${record.section} ${record.observation} ${record.status} ${record.id} ${positioningLabel(record)} ${record.userName || ''} ${record.userEmail || ''}`.toLowerCase();
     return (!search || haystack.includes(search)) && (!type || record.type === type);
   }).reverse();
 }
@@ -160,17 +162,17 @@ els.exportBtn.addEventListener('click', () => {
   const records = filteredRecords();
   if (!records.length) { showToast('No hay registros para exportar'); return; }
   const headers = [
-    'ID','Fecha','Hora','Latitud_Final','Longitud_Final','Metodo_Ubicacion',
-    'GPS_Latitud_Original','GPS_Longitud_Original','Precision_GPS_m','Calidad_GPS',
-    'Ajuste_Manual_m','Capa_Mapa','Tipo','Estado','Tramo_Sector','Sentido','Observacion','Estado_Sincronizacion'
+    'ID','Fecha','Hora','Usuario_UID','Usuario_Nombre','Usuario_Email',
+    'Latitud_Final','Longitud_Final','Metodo_Ubicacion','GPS_Latitud_Original','GPS_Longitud_Original',
+    'Precision_GPS_m','Calidad_GPS','Ajuste_Manual_m','Capa_Mapa','Tipo','Estado','Tramo_Sector','Sentido','Observacion','Estado_Sincronizacion'
   ];
   const rows = records.map(r => {
     const accuracy = getGpsAccuracy(r);
     return [
-      r.id,r.date,r.time,r.latitude,r.longitude,positioningLabel(r),
-      r.gpsLatitude,r.gpsLongitude,accuracy ?? '',accuracy ? qualityLabel(accuracy) : 'Sin dato',
-      r.manualOffsetMeters ?? '',r.mapLayer === 'street' ? 'Calles' : 'Satelite',
-      r.type,r.status,r.section,r.direction,r.observation,r.syncStatus
+      r.id,r.date,r.time,r.userId || '',r.userName || '',r.userEmail || '',
+      r.latitude,r.longitude,positioningLabel(r),r.gpsLatitude,r.gpsLongitude,
+      accuracy ?? '',accuracy ? qualityLabel(accuracy) : 'Sin dato',r.manualOffsetMeters ?? '',
+      r.mapLayer === 'street' ? 'Calles' : 'Satelite',r.type,r.status,r.section,r.direction,r.observation,r.syncStatus
     ];
   });
   const csv = '\uFEFF' + [headers,...rows].map(row => row.map(csvCell).join(',')).join('\n');
@@ -183,4 +185,5 @@ els.exportBtn.addEventListener('click', () => {
   showToast('Archivo compatible con Excel exportado');
 });
 
+document.addEventListener('geocampo:authchange', renderTable);
 renderTable();
