@@ -88,18 +88,21 @@ export async function saveRecordToCloud(record, photoDataUrl) {
   });
 
   const imageUrl = await getDownloadURL(imageRef);
-  const payload = cleanObject({
+  const cleanPayload = cleanObject({
     ...record,
     ...author,
     imageUrl,
     imagePath,
     photoDataUrl: undefined,
-    syncStatus: 'synced',
-    createdAtServer: serverTimestamp()
+    syncStatus: 'synced'
   });
+  const payload = {
+    ...cleanPayload,
+    createdAtServer: serverTimestamp()
+  };
 
   await setDoc(doc(db, 'records', record.id), payload);
-  return { ...payload, imageUrl };
+  return { ...cleanPayload, imageUrl };
 }
 
 function normalizeRecord(snapshot) {
@@ -124,5 +127,5 @@ export async function fetchRecordsFromCloud() {
   const snapshot = await getDocs(request);
   return snapshot.docs
     .map(normalizeRecord)
-    .sort((a, b) => String(b.createdAt || b.createdAtServer || '').localeCompare(String(a.createdAt || a.createdAtServer || '')));
+    .sort((a, b) => String(a.createdAt || a.createdAtServer || '').localeCompare(String(b.createdAt || b.createdAtServer || '')));
 }
