@@ -1,3 +1,5 @@
+import { currentAuthor, saveRecordToCloud } from './cloud-data.js';
+
 const STORAGE_KEY = 'geocampo_records_v01';
 const NICARAGUA_CENTER = [12.8654, -85.2072];
 const GPS_SAMPLE_MS = 12000;
@@ -56,6 +58,7 @@ const els = {
   toast: $('toast'),
   toastMessage: $('toastMessage'),
   toastIcon: $('toastIcon'),
+  saveBtn: $('saveBtn'),
 };
 
 function formatDateTime(date = new Date()) {
@@ -532,7 +535,7 @@ function saveRecords(records) {
 }
 
 function escapeHtml(value = '') {
-  return String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;' }[char]));
+  return String(value).replace(/[&<>'\"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '\"':'&quot;' }[char]));
 }
 
 function renderRecentRecords() {
@@ -544,10 +547,11 @@ function renderRecentRecords() {
     const accuracy = Number(record.gpsAccuracy ?? record.accuracy);
     const accuracyText = Number.isFinite(accuracy) && accuracy > 0 ? `±${accuracy.toFixed(1)} m GPS` : 'Sin precisión GPS';
     const methodText = record.locationMethod === 'manual' ? 'Ajuste manual' : 'GPS automático';
+    const image = record.imageUrl || record.photoDataUrl || '';
     const article = document.createElement('article');
     article.className = 'record-item';
     article.innerHTML = `
-      <img class="record-thumb" src="${record.photoDataUrl}" alt="Evidencia del registro ${escapeHtml(record.id)}" />
+      <img class="record-thumb" src="${escapeHtml(image)}" alt="Evidencia del registro ${escapeHtml(record.id)}" />
       <div class="record-main">
         <strong>${escapeHtml(record.type)}</strong>
         <p>${escapeHtml(record.observation || 'Sin observaciones adicionales')}</p>
@@ -556,6 +560,7 @@ function renderRecentRecords() {
           <span class="meta-chip">${accuracyText}</span>
           <span class="meta-chip">${methodText}</span>
           <span class="meta-chip">${escapeHtml(record.date)}</span>
+          ${record.userName ? `<span class="meta-chip">Por ${escapeHtml(record.userName)}</span>` : ''}
         </div>
       </div>
       <span class="record-id">${escapeHtml(record.id)}</span>`;
@@ -592,43 +597,7 @@ function resetLocationAfterSave() {
   els.gpsHeroSubtitle.textContent = 'Activa la ubicación al crear un registro';
 }
 
-els.recordForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  if (!state.photoDataUrl) {
-    showToast('Debes tomar una fotografía antes de guardar', 'error');
-    return;
-  }
-  if (!state.location) {
-    showToast('Debes capturar o definir la ubicación antes de guardar', 'error');
-    return;
-  }
-
-  const now = formatDateTime();
-  const record = {
-    id: `GC-${Date.now().toString().slice(-8)}`,
-    photoDataUrl: state.photoDataUrl,
-    ...state.location,
-    type: $('type').value,
-    status: $('status').value,
-    section: $('section').value.trim(),
-    direction: $('direction').value,
-    observation: $('observation').value.trim(),
-    date: now.date,
-    time: now.time,
-    createdAt: now.iso,
-    mapLayer: mapState.currentLayer,
-    syncStatus: 'local',
-  };
-
-  const records = getRecords();
-  records.push(record);
-  try {
-    saveRecords(records);
-  } catch {
-    showToast('El almacenamiento local está lleno. Con Firebase este límite desaparecerá.', 'error');
-    return;
-  }
-
+function resetFormAfterSave() {
   els.recordForm.reset();
   state.photoDataUrl = '';
   els.photoPreview.hidden = true;
@@ -639,7 +608,87 @@ els.recordForm.addEventListener('submit', (event) => {
   resetLocationAfterSave();
   renderRecentRecords();
   refreshClock();
-  showToast('Registro guardado correctamente');
+}
+
+function setSavingState(saving) {
+  if (!els.saveBtn) return;
+  els.saveBtn.disabled = saving;
+  els.saveBtn.innerHTML = saving
+    ? '<span class="save-spinner" aria-hidden="true"></span> Guardando en Firebase…'
+    : '<svg viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"/></svg> Guardar registro';
+}
+
+els.recordForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!state.photoDataUrl) {
+    showToast('Debes tomar una fotografía antes de guardar', 'error');
+    return;
+  }
+  if (!state.location) {
+    showToast('Debes capturar o definir la ubicación antes de guardar', 'error');
+    return;
+  }
+
+  const author = currentAuthor();
+  if (!author) {
+    window.GeoCampoAuth?.openLogin?.('Debes iniciar sesión antes de guardar para identificar quién realizó el registro.');
+    return;
+  }
+
+  const now = formatDateTime();
+  const record = {
+    id: `GC-${Date.now().toString().slice(-8)}`,
+    ...state.location,
+    ...author,
+    type: $('type').value,
+    status: $('status').value,
+    section: $('section').value.trim(),
+    direction: $('direction').value,
+    observation: $('observation').value.trim(),
+    date: now.date,
+    time: now.time,
+    createdAt: now.iso,
+    mapLayer: mapState.currentLayer,
+    syncStatus: 'syncing',
+  };
+
+  setSavingState(true);
+
+  try {
+    // Camino principal: la fotografía va directamente a Firebase Storage y
+    // Firestore. localStorage recibe únicamente metadatos + imageUrl.
+    const cloudRecord = await saveRecordToCloud(record, state.photoDataUrl);
+    const records = getRecords().filter(item => item.id !== record.id);
+    records.push({ ...record, ...cloudRecord, syncStatus: 'synced' });
+    saveRecords(records);
+    resetFormAfterSave();
+    showToast('Registro guardado en Firebase correctamente');
+  } catch (cloudError) {
+    console.warn('GeoCampo: guardado directo en Firebase no disponible; usando respaldo local.', cloudError);
+
+    // Respaldo temporal para pérdida de conectividad. Solo la evidencia pendiente
+    // conserva base64; en cuanto sincroniza, cloud-sync.js la elimina automáticamente.
+    const pendingRecord = {
+      ...record,
+      photoDataUrl: state.photoDataUrl,
+      syncStatus: 'local',
+      syncError: cloudError?.code || cloudError?.message || 'Pendiente de sincronización'
+    };
+
+    try {
+      const records = getRecords();
+      records.push(pendingRecord);
+      saveRecords(records);
+      resetFormAfterSave();
+      window.GeoCampoCloud?.sync?.();
+      showToast('Registro guardado temporalmente. Se sincronizará al recuperar conexión.');
+    } catch (localError) {
+      console.error('GeoCampo: no se pudo crear respaldo local.', localError);
+      showToast('No hay conexión con Firebase y el respaldo local está lleno. Conéctate a internet y vuelve a guardar.', 'error');
+    }
+  } finally {
+    setSavingState(false);
+  }
 });
 
 window.addEventListener('beforeunload', clearGpsWatch);
