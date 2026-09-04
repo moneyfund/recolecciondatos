@@ -17,18 +17,57 @@ function readLocalRecords() {
   }
 }
 
+function compactRecord(record) {
+  if (!record || typeof record !== 'object') return record;
+
+  // Una vez que Firebase confirma el registro y existe una URL remota,
+  // la fotografía base64 deja de almacenarse en localStorage. Esto evita
+  // llenar el límite del navegador después de unas pocas evidencias.
+  if (record.syncStatus === 'synced' && record.imageUrl) {
+    const { photoDataUrl, ...compact } = record;
+    return compact;
+  }
+
+  return record;
+}
+
+function compactRecords(records) {
+  return (Array.isArray(records) ? records : []).map(compactRecord);
+}
+
 function writeLocalRecords(records) {
   internalWrite = true;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(compactRecords(records)));
   } finally {
     internalWrite = false;
   }
 }
 
+function recoverLocalStorageSpace() {
+  const records = readLocalRecords();
+  if (!records.length) return;
+
+  const compacted = compactRecords(records);
+  const before = JSON.stringify(records).length;
+  const after = JSON.stringify(compacted).length;
+
+  if (after < before) {
+    try {
+      internalWrite = true;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(compacted));
+      console.info(`GeoCampo: almacenamiento local optimizado (${Math.round((before - after) / 1024)} KB liberados).`);
+    } catch (error) {
+      console.warn('GeoCampo: no se pudo compactar el almacenamiento local.', error);
+    } finally {
+      internalWrite = false;
+    }
+  }
+}
+
 function prepareCloudUi() {
   const hint = document.querySelector('.form-hint');
-  if (hint) hint.textContent = 'Guardado local seguro con sincronización automática a Firebase.';
+  if (hint) hint.textContent = 'Las fotos se guardan en Firebase; el dispositivo conserva solo una copia temporal durante la sincronización.';
 
   const sidebarSmall = document.querySelector('.sidebar-foot small');
   if (sidebarSmall) sidebarSmall.textContent = 'Firestore + Storage conectados';
@@ -56,7 +95,7 @@ function updateConnection(text, state = 'ready') {
 }
 
 function escapeHtml(value = '') {
-  return String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;' }[char]));
+  return String(value).replace(/[&<>'\"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '\"':'&quot;' }[char]));
 }
 
 function renderRecentFromLocal() {
@@ -72,7 +111,7 @@ function renderRecentFromLocal() {
     const accuracy = Number(record.gpsAccuracy ?? record.accuracy);
     const accuracyText = Number.isFinite(accuracy) && accuracy > 0 ? `±${accuracy.toFixed(1)} m GPS` : 'Sin precisión GPS';
     const methodText = record.locationMethod === 'manual' ? 'Ajuste manual' : 'GPS automático';
-    const image = record.photoDataUrl || record.imageUrl || '';
+    const image = record.imageUrl || record.photoDataUrl || '';
     const article = document.createElement('article');
     article.className = 'record-item';
     article.innerHTML = `
@@ -142,10 +181,16 @@ async function syncPendingRecords() {
       writeLocalRecords(records);
 
       const cloudRecord = await saveRecordToCloud({ ...record, syncStatus: 'synced' }, record.photoDataUrl);
-      records = readLocalRecords().map(item => item.id === record.id
-        ? { ...item, ...cloudRecord, photoDataUrl: item.photoDataUrl, syncStatus: 'synced', syncError: '' }
-        : item
-      );
+      records = readLocalRecords().map(item => {
+        if (item.id !== record.id) return item;
+        const { photoDataUrl, ...withoutLocalPhoto } = item;
+        return {
+          ...withoutLocalPhoto,
+          ...cloudRecord,
+          syncStatus: 'synced',
+          syncError: ''
+        };
+      });
       writeLocalRecords(records);
       refreshViews();
     } catch (error) {
@@ -171,26 +216,50 @@ function patchLocalStorage() {
   const previousSetItem = Storage.prototype.setItem;
 
   Storage.prototype.setItem = function(key, value) {
-    const result = previousSetItem.call(this, key, value);
-    if (!internalWrite && this === window.localStorage && key === STORAGE_KEY) {
-      queueMicrotask(syncPendingRecords);
+    if (this !== window.localStorage || key !== STORAGE_KEY || internalWrite) {
+      return previousSetItem.call(this, key, value);
     }
-    return result;
+
+    try {
+      const result = previousSetItem.call(this, key, value);
+      queueMicrotask(syncPendingRecords);
+      return result;
+    } catch (error) {
+      // Si el navegador alcanza su cuota, eliminamos inmediatamente las
+      // copias base64 de registros que ya están seguros en Firebase y reintentamos.
+      if (error?.name !== 'QuotaExceededError' && error?.name !== 'NS_ERROR_DOM_QUOTA_REACHED') throw error;
+
+      recoverLocalStorageSpace();
+
+      try {
+        const incoming = JSON.parse(value);
+        const compactedValue = JSON.stringify(compactRecords(incoming));
+        const result = previousSetItem.call(this, key, compactedValue);
+        queueMicrotask(syncPendingRecords);
+        return result;
+      } catch (retryError) {
+        throw retryError;
+      }
+    }
   };
 }
 
+recoverLocalStorageSpace();
 prepareCloudUi();
 patchLocalStorage();
 
 document.addEventListener('geocampo:authchange', async () => {
+  recoverLocalStorageSpace();
   prepareCloudUi();
   await hydrateFromCloud();
   await syncPendingRecords();
+  recoverLocalStorageSpace();
 });
 
 window.addEventListener('online', syncPendingRecords);
 
 window.GeoCampoCloud = {
   hydrate: hydrateFromCloud,
-  sync: syncPendingRecords
+  sync: syncPendingRecords,
+  compact: recoverLocalStorageSpace
 };
