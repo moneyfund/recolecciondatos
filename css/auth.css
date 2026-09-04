@@ -1,0 +1,40 @@
+/* GeoCampo · Authentication gate */
+.auth-login-btn,.auth-user-chip{min-height:38px;border-radius:12px;font-family:inherit;transition:.2s ease}
+.auth-login-btn{display:inline-flex;align-items:center;gap:8px;padding:0 12px;border:1px solid #dce5ee;background:#fff;color:#173653;font-size:10px;font-weight:800;cursor:pointer}
+.auth-login-btn svg{width:15px;height:15px}
+.auth-login-btn:hover{border-color:#b9c9d9;box-shadow:0 7px 18px rgba(7,26,51,.08)}
+.auth-user-chip{display:flex;align-items:center;gap:8px;padding:4px 5px 4px 7px;border:1px solid #dce5ee;background:#fff;color:#173653}
+.auth-user-avatar{width:28px;height:28px;border-radius:9px;object-fit:cover;background:#eaf0f6;border:1px solid rgba(7,26,51,.08)}
+.auth-user-avatar-fallback{display:grid;place-items:center;font-size:10px;font-weight:800;color:#fff;background:linear-gradient(145deg,#173653,#2f679c)}
+.auth-user-copy{display:flex;flex-direction:column;min-width:0;max-width:110px}
+.auth-user-copy strong{font-size:9.5px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.auth-user-copy small{font-size:7.5px;color:#8491a1;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.auth-signout-btn{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:8px;background:#f2f5f8;color:#657588;cursor:pointer}
+.auth-signout-btn:hover{background:#e8eef4;color:#183753}.auth-signout-btn svg{width:13px;height:13px}
+
+.home-topbar:not(.scrolled) .auth-login-btn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.24);color:#fff;backdrop-filter:blur(10px)}
+.home-topbar:not(.scrolled) .auth-login-btn:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.38)}
+.home-topbar:not(.scrolled) .auth-user-chip{background:rgba(4,16,31,.22);border-color:rgba(255,255,255,.23);color:#fff;backdrop-filter:blur(10px)}
+.home-topbar:not(.scrolled) .auth-user-copy small{color:rgba(255,255,255,.64)}
+.home-topbar:not(.scrolled) .auth-signout-btn{background:rgba(255,255,255,.12);color:#fff}
+.home-topbar.scrolled .auth-login-btn{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);color:#fff}
+.home-topbar.scrolled .auth-user-chip{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.20);color:#fff}
+.home-topbar.scrolled .auth-user-copy small{color:rgba(255,255,255,.68)}
+.home-topbar.scrolled .auth-signout-btn{background:rgba(255,255,255,.12);color:#fff}
+
+.auth-modal-backdrop{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:18px;background:rgba(3,13,25,.62);backdrop-filter:blur(8px);opacity:0;visibility:hidden;transition:.22s ease}
+.auth-modal-backdrop.open{opacity:1;visibility:visible}
+.auth-modal{width:min(430px,100%);border-radius:24px;background:#fff;border:1px solid rgba(255,255,255,.7);box-shadow:0 30px 100px rgba(1,12,24,.34);overflow:hidden;transform:translateY(12px) scale(.985);transition:.25s cubic-bezier(.2,.7,.2,1)}
+.auth-modal-backdrop.open .auth-modal{transform:none}
+.auth-modal-head{padding:24px 25px 18px;background:linear-gradient(145deg,#071a33,#103b68);color:#fff;position:relative;overflow:hidden}
+.auth-modal-head:after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-95px;top:-95px;border:1px solid rgba(255,255,255,.10)}
+.auth-modal-mark{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);margin-bottom:18px}.auth-modal-mark svg{width:20px;height:20px}
+.auth-modal-head h2{margin:0;font-size:21px;letter-spacing:-.04em}.auth-modal-head p{margin:8px 0 0;color:rgba(255,255,255,.72);font-size:11px;line-height:1.55;max-width:340px}
+.auth-modal-close{position:absolute;right:14px;top:14px;width:32px;height:32px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font-size:19px;cursor:pointer;z-index:1}
+.auth-modal-body{padding:22px 25px 25px}.auth-reason{padding:11px 12px;border-radius:12px;background:#f5f8fb;border:1px solid #e4eaf0;color:#657487;font-size:10px;line-height:1.5;margin-bottom:15px}.auth-reason strong{display:block;color:#173653;font-size:10.5px;margin-bottom:2px}
+.google-signin-btn{width:100%;min-height:48px;border:1px solid #d7e0e9;border-radius:13px;background:#fff;color:#1c344c;display:flex;align-items:center;justify-content:center;gap:10px;font-size:11px;font-weight:800;cursor:pointer;box-shadow:0 7px 18px rgba(7,26,51,.05);transition:.2s}.google-signin-btn:hover:not(:disabled){border-color:#b7c8d8;box-shadow:0 10px 26px rgba(7,26,51,.09);transform:translateY(-1px)}.google-signin-btn:disabled{opacity:.55;cursor:not-allowed}.google-g{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:900;color:#4285f4;background:#f2f6ff}
+.auth-status{min-height:16px;margin:11px 0 0;text-align:center;color:#7d8b99;font-size:9px;line-height:1.45}.auth-status.error{color:#a13b3b}.auth-privacy{margin:15px 0 0;padding-top:14px;border-top:1px solid #edf1f4;color:#929eaa;font-size:8.5px;line-height:1.5;text-align:center}
+
+.record-author{display:flex;align-items:center;gap:6px;margin-top:6px;color:#6e7d8d;font-size:9px;font-weight:700}.record-author img,.record-author .author-fallback{width:19px;height:19px;border-radius:6px;object-fit:cover}.record-author .author-fallback{display:grid;place-items:center;background:#eaf1f7;color:#28557e;font-size:7px;font-weight:800}.record-author strong{color:#334c64;font-size:9px}.detail-author{display:flex!important;align-items:center;gap:9px}.detail-author img,.detail-author .author-fallback{width:28px;height:28px;border-radius:9px;object-fit:cover}.detail-author .author-fallback{display:grid;place-items:center;background:#eaf1f7;color:#28557e;font-size:9px;font-weight:800}
+
+@media(max-width:700px){.auth-user-copy{display:none}.auth-user-chip{padding-left:5px}.auth-login-btn span{display:none}.auth-login-btn{width:38px;padding:0;justify-content:center}.auth-modal{border-radius:20px}.auth-modal-head{padding:22px 20px 17px}.auth-modal-body{padding:19px 20px 22px}}
