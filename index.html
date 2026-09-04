@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="./css/styles.css" />
   <link rel="stylesheet" href="./css/map.css" />
+  <link rel="stylesheet" href="./css/hero.css" />
 </head>
 <body>
   <div class="page-glow page-glow-one"></div>
@@ -44,13 +45,20 @@
     </header>
 
     <main>
-      <section class="hero fade-up">
-        <div class="hero-copy">
+      <section class="hero hero-photo fade-up" id="homeHero" aria-label="GeoCampo, herramienta de levantamiento georreferenciado">
+        <div class="hero-slides" aria-hidden="true">
+          <div class="hero-slide" id="heroSlideA"></div>
+          <div class="hero-slide" id="heroSlideB"></div>
+        </div>
+        <div class="hero-shade" aria-hidden="true"></div>
+        <div class="hero-texture" aria-hidden="true"></div>
+
+        <div class="hero-content">
           <div class="hero-kicker"><span class="live-dot"></span> Herramienta de campo · Tesis de Ingeniería Civil</div>
           <h1>Documenta cada punto con <span>evidencia georreferenciada.</span></h1>
-          <p>Captura fotografías, coordenadas GPS, precisión, fecha, hora y observaciones desde una interfaz diseñada para trabajar rápido en carretera.</p>
+          <p class="hero-description">Captura fotografías, coordenadas GPS de alta precisión, verificación satelital y observaciones desde una interfaz diseñada para trabajar rápido y con trazabilidad en carretera.</p>
           <div class="hero-actions">
-            <a class="btn btn-primary hero-cta" href="#capture">
+            <a class="btn hero-cta" href="#capture">
               <svg viewBox="0 0 24 24"><path d="M4 7h3l1.5-2h7L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg>
               Crear registro
             </a>
@@ -58,23 +66,27 @@
           </div>
         </div>
 
-        <aside class="hero-console">
-          <div class="console-topline">
-            <span>ESTADO DEL DISPOSITIVO</span>
-            <span class="console-ready"><i></i> Listo</span>
+        <div class="hero-photo-meta">
+          <div class="hero-place" aria-live="polite">
+            <span class="hero-place-icon"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+            <span><small>CIUDADES DE NICARAGUA</small><strong id="heroCity">Nicaragua</strong></span>
           </div>
-          <div class="hero-status">
-            <div class="status-icon pulse-dot">
-              <svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          <div class="hero-carousel-controls" aria-label="Cambiar fotografía del hero">
+            <div class="hero-dots">
+              <button type="button" class="hero-dot" aria-label="Mostrar Managua"></button>
+              <button type="button" class="hero-dot" aria-label="Mostrar Granada"></button>
+              <button type="button" class="hero-dot" aria-label="Mostrar León"></button>
+              <button type="button" class="hero-dot" aria-label="Mostrar Masaya"></button>
             </div>
-            <div><strong id="gpsHeroTitle">GPS listo para iniciar</strong><small id="gpsHeroSubtitle">Activa la ubicación al crear un registro</small></div>
+            <button type="button" class="hero-next" id="heroNext" aria-label="Mostrar otra ciudad">
+              <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
           </div>
-          <div class="console-features">
-            <div><span class="feature-icon">01</span><p><strong>Fotografía</strong><small>Cámara del dispositivo</small></p></div>
-            <div><span class="feature-icon">02</span><p><strong>Coordenadas</strong><small>GPS + ajuste visual</small></p></div>
-            <div><span class="feature-icon">03</span><p><strong>Ficha técnica</strong><small>Observación y estado</small></p></div>
-          </div>
-        </aside>
+        </div>
+
+        <a id="heroCredit" class="hero-credit" href="#" target="_blank" rel="noopener noreferrer">Fotografía de Wikimedia Commons</a>
+        <span id="gpsHeroTitle" hidden>GPS listo para iniciar</span>
+        <span id="gpsHeroSubtitle" hidden>Activa la ubicación al crear un registro</span>
       </section>
 
       <section class="workflow-intro fade-up delay-1" id="capture">
@@ -219,12 +231,13 @@
       </section>
     </main>
 
-    <footer><span>GeoCampo · Ingeniería Civil</span><span>v0.2 · GPS + verificación cartográfica</span></footer>
+    <footer><span>GeoCampo · Ingeniería Civil</span><span>v0.3 · GPS + mapa + evidencia visual</span></footer>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastIcon">✓</span><p id="toastMessage">Registro guardado</p></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="./js/app.js"></script>
+  <script type="module" src="./js/hero.js"></script>
 </body>
 </html>
