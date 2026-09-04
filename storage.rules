@@ -24,18 +24,22 @@ service firebase.storage {
     }
 
     match /field-records/{userId}/{recordId}/{fileName} {
-      allow read: if isAdmin()
-        || (isSignedIn() && request.auth.uid == userId);
+      // Todos los usuarios autenticados pueden ver la evidencia fotográfica
+      // de todos los registros de la investigación.
+      allow read: if isSignedIn();
 
+      // Cada usuario solo puede subir imágenes dentro de su propia carpeta.
       allow create: if isSignedIn()
         && request.auth.uid == userId
         && isImage()
         && validImageSize();
 
+      // Solo un administrador puede sustituir una evidencia existente.
       allow update: if isAdmin()
         && isImage()
         && validImageSize();
 
+      // Solo un administrador puede eliminar evidencia.
       allow delete: if isAdmin();
     }
 
