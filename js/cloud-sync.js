@@ -26,6 +26,22 @@ function writeLocalRecords(records) {
   }
 }
 
+function prepareCloudUi() {
+  const hint = document.querySelector('.form-hint');
+  if (hint) hint.textContent = 'Guardado local seguro con sincronización automática a Firebase.';
+
+  const sidebarSmall = document.querySelector('.sidebar-foot small');
+  if (sidebarSmall) sidebarSmall.textContent = 'Firestore + Storage conectados';
+
+  const statusMini = document.querySelector('.status-mini');
+  if (statusMini) {
+    const dot = statusMini.querySelector('i');
+    statusMini.textContent = '';
+    if (dot) statusMini.appendChild(dot);
+    statusMini.appendChild(document.createTextNode(' Nube activa'));
+  }
+}
+
 function updateConnection(text, state = 'ready') {
   const pill = document.getElementById('connectionStatus');
   if (!pill) return;
@@ -91,7 +107,11 @@ async function hydrateFromCloud() {
     const cloudRecords = await fetchRecordsFromCloud();
     const localRecords = readLocalRecords();
     const cloudIds = new Set(cloudRecords.map(record => record.id));
-    const pending = localRecords.filter(record => !cloudIds.has(record.id) && record.syncStatus !== 'synced');
+    const pending = localRecords.filter(record =>
+      !cloudIds.has(record.id)
+      && record.syncStatus !== 'synced'
+      && (!record.userId || record.userId === author.userId)
+    );
     writeLocalRecords([...cloudRecords, ...pending]);
     refreshViews();
   } catch (error) {
@@ -159,9 +179,11 @@ function patchLocalStorage() {
   };
 }
 
+prepareCloudUi();
 patchLocalStorage();
 
 document.addEventListener('geocampo:authchange', async () => {
+  prepareCloudUi();
   await hydrateFromCloud();
   await syncPendingRecords();
 });
