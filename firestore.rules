@@ -21,9 +21,11 @@ service cloud.firestore {
     }
 
     match /records/{recordId} {
-      allow read: if isAdmin()
-        || (isSignedIn() && resource.data.userId == request.auth.uid);
+      // Todos los usuarios autenticados del equipo pueden consultar
+      // todos los registros de la investigación.
+      allow read: if isSignedIn();
 
+      // Cada usuario solo puede crear registros bajo su propio UID.
       allow create: if isSignedIn()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.latitude is number
@@ -33,6 +35,8 @@ service cloud.firestore {
         && request.resource.data.longitude >= -180
         && request.resource.data.longitude <= 180;
 
+      // El autor puede corregir su propio registro sin cambiar su propietario.
+      // El administrador puede corregir cualquier registro.
       allow update: if isAdmin()
         || (
           isSignedIn()
@@ -40,6 +44,7 @@ service cloud.firestore {
           && request.resource.data.userId == resource.data.userId
         );
 
+      // Para preservar la evidencia, solo un administrador puede eliminar.
       allow delete: if isAdmin();
     }
 
