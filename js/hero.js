@@ -1,4 +1,5 @@
 import './auth-gate.js';
+import './cloud-sync.js';
 
 const hero = document.getElementById('homeHero');
 const topbar = document.getElementById('homeTopbar');
