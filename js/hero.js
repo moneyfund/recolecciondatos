@@ -1,11 +1,19 @@
 const hero = document.getElementById('homeHero');
+const topbar = document.getElementById('homeTopbar');
+
+function updateNavbarState() {
+  if (!topbar) return;
+  topbar.classList.toggle('scrolled', window.scrollY > 36);
+}
+
+updateNavbarState();
+window.addEventListener('scroll', updateNavbarState, { passive: true });
 
 if (hero) {
   const slides = [
     document.getElementById('heroSlideA'),
     document.getElementById('heroSlideB'),
   ];
-  const cityLabel = document.getElementById('heroCity');
   const credit = document.getElementById('heroCredit');
   const nextButton = document.getElementById('heroNext');
   const dots = [...document.querySelectorAll('.hero-dot')];
@@ -48,10 +56,11 @@ if (hero) {
 
   function updateMeta(index) {
     const photo = photos[index];
-    cityLabel.textContent = `${photo.city}, Nicaragua`;
-    credit.textContent = `Foto: ${photo.credit}`;
-    credit.href = photo.source;
-    credit.setAttribute('aria-label', `Crédito de la fotografía de ${photo.city}`);
+    if (credit) {
+      credit.textContent = `Foto: ${photo.credit}`;
+      credit.href = photo.source;
+      credit.setAttribute('aria-label', `Crédito de fotografía de Wikimedia Commons`);
+    }
     dots.forEach((dot, dotIndex) => dot.classList.toggle('active', dotIndex === index));
   }
 
@@ -84,7 +93,7 @@ if (hero) {
           activeSlide = nextSlideIndex;
         }
         currentIndex = index;
-        window.setTimeout(() => { isChanging = false; }, immediate ? 80 : 1250);
+        window.setTimeout(() => { isChanging = false; }, immediate ? 80 : 1350);
       });
     };
 
@@ -129,6 +138,10 @@ if (hero) {
 
   hero.addEventListener('mouseenter', () => window.clearInterval(timer));
   hero.addEventListener('mouseleave', restartTimer);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) window.clearInterval(timer);
+    else restartTimer();
+  });
 
   showPhoto(currentIndex, true);
   restartTimer();
