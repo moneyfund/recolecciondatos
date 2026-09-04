@@ -1,3 +1,5 @@
+import './auth-gate.js';
+
 const hero = document.getElementById('homeHero');
 const topbar = document.getElementById('homeTopbar');
 
