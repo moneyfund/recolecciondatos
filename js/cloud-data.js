@@ -4,10 +4,8 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
   serverTimestamp,
-  setDoc,
-  where
+  setDoc
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import {
   getDownloadURL,
@@ -126,13 +124,9 @@ export async function fetchRecordsFromCloud() {
   const user = await waitForAuthReady();
   if (!user) return [];
 
-  const role = await getCurrentRole();
-  const recordsRef = collection(db, 'records');
-  const request = role === 'admin'
-    ? recordsRef
-    : query(recordsRef, where('userId', '==', user.uid));
-
-  const snapshot = await getDocs(request);
+  // Durante la fase de investigación todos los usuarios autenticados
+  // trabajan sobre una base compartida y pueden consultar todos los registros.
+  const snapshot = await getDocs(collection(db, 'records'));
   return snapshot.docs
     .map(normalizeRecord)
     .sort((a, b) => String(a.createdAt || a.createdAtServer || '').localeCompare(String(b.createdAt || b.createdAtServer || '')));
