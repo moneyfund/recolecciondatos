@@ -1,4 +1,5 @@
 import './auth-gate.js';
+import './cloud-sync.js';
 
 const STORAGE_KEY = 'geocampo_records_v01';
 const $ = (id) => document.getElementById(id);
@@ -97,9 +98,10 @@ function renderTable() {
   els.adminEmpty.hidden = records.length > 0;
 
   records.forEach(record => {
+    const image = record.photoDataUrl || record.imageUrl || '';
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><img class="table-thumb" src="${record.photoDataUrl}" alt="Evidencia ${escapeHtml(record.id)}" /></td>
+      <td><img class="table-thumb" src="${escapeHtml(image)}" alt="Evidencia ${escapeHtml(record.id)}" /></td>
       <td><span class="record-title">${escapeHtml(record.type)}</span><span class="record-sub">${escapeHtml(record.id)} · ${escapeHtml(record.section || 'Sin tramo')}</span></td>
       <td><span class="coord">${Number(record.latitude).toFixed(6)}</span><br><span class="coord">${Number(record.longitude).toFixed(6)}</span><br><span class="record-sub">${positioningLabel(record)}</span></td>
       <td><span class="quality-badge">${accuracyBadge(record)}</span></td>
@@ -121,11 +123,12 @@ function detailValue(value, digits = null) {
 function openDetail(id) {
   const record = getRecords().find(r => r.id === id);
   if (!record) return;
+  const image = record.photoDataUrl || record.imageUrl || '';
   const accuracy = getGpsAccuracy(record);
   const offset = Number(record.manualOffsetMeters);
   const hasOffset = Number.isFinite(offset) && record.manualOffsetMeters !== null && record.manualOffsetMeters !== undefined;
   els.dialogContent.innerHTML = `
-    <img class="detail-image" src="${record.photoDataUrl}" alt="Evidencia ${escapeHtml(record.id)}" />
+    <img class="detail-image" src="${escapeHtml(image)}" alt="Evidencia ${escapeHtml(record.id)}" />
     <div class="detail-body">
       <span class="eyebrow">${escapeHtml(record.id)}</span>
       <h3>${escapeHtml(record.type)}</h3>
