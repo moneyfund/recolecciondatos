@@ -75,19 +75,27 @@ export async function saveRecordToCloud(record, photoDataUrl) {
   if (!user) throw new Error('AUTH_REQUIRED');
 
   const author = currentAuthor();
-  const blob = dataUrlToBlob(photoDataUrl);
   const imagePath = `field-records/${user.uid}/${record.id}/evidencia.jpg`;
   const imageRef = ref(storage, imagePath);
+  let imageUrl = '';
 
-  await uploadBytes(imageRef, blob, {
-    contentType: blob.type || 'image/jpeg',
-    customMetadata: {
-      recordId: record.id,
-      userId: user.uid
-    }
-  });
+  // Si un intento anterior ya alcanzó Storage pero no Firestore,
+  // reutilizamos el archivo para no sobrescribir evidencia de campo.
+  try {
+    imageUrl = await getDownloadURL(imageRef);
+  } catch (error) {
+    if (error?.code !== 'storage/object-not-found') throw error;
+    const blob = dataUrlToBlob(photoDataUrl);
+    await uploadBytes(imageRef, blob, {
+      contentType: blob.type || 'image/jpeg',
+      customMetadata: {
+        recordId: record.id,
+        userId: user.uid
+      }
+    });
+    imageUrl = await getDownloadURL(imageRef);
+  }
 
-  const imageUrl = await getDownloadURL(imageRef);
   const cleanPayload = cleanObject({
     ...record,
     ...author,
