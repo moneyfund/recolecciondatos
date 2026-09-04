@@ -14,12 +14,12 @@
   <link rel="stylesheet" href="./css/map.css" />
   <link rel="stylesheet" href="./css/hero.css" />
 </head>
-<body>
+<body class="home-page">
   <div class="page-glow page-glow-one"></div>
   <div class="page-glow page-glow-two"></div>
 
   <div class="app-shell">
-    <header class="topbar">
+    <header class="topbar home-topbar" id="homeTopbar">
       <a class="brand" href="./index.html" aria-label="GeoCampo inicio">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg>
@@ -54,9 +54,9 @@
         <div class="hero-texture" aria-hidden="true"></div>
 
         <div class="hero-content">
-          <div class="hero-kicker"><span class="live-dot"></span> Herramienta de campo · Tesis de Ingeniería Civil</div>
-          <h1>Documenta cada punto con <span>evidencia georreferenciada.</span></h1>
-          <p class="hero-description">Captura fotografías, coordenadas GPS de alta precisión, verificación satelital y observaciones desde una interfaz diseñada para trabajar rápido y con trazabilidad en carretera.</p>
+          <div class="hero-kicker"><span class="live-dot"></span> Levantamiento de campo · Ingeniería Civil</div>
+          <h1>Evidencia precisa.<br><span>Donde ocurre.</span></h1>
+          <p class="hero-description">Fotografía, GPS de alta precisión y verificación satelital en un solo registro de campo.</p>
           <div class="hero-actions">
             <a class="btn hero-cta" href="#capture">
               <svg viewBox="0 0 24 24"><path d="M4 7h3l1.5-2h7L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -67,18 +67,14 @@
         </div>
 
         <div class="hero-photo-meta">
-          <div class="hero-place" aria-live="polite">
-            <span class="hero-place-icon"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
-            <span><small>CIUDADES DE NICARAGUA</small><strong id="heroCity">Nicaragua</strong></span>
-          </div>
           <div class="hero-carousel-controls" aria-label="Cambiar fotografía del hero">
             <div class="hero-dots">
-              <button type="button" class="hero-dot" aria-label="Mostrar Managua"></button>
-              <button type="button" class="hero-dot" aria-label="Mostrar Granada"></button>
-              <button type="button" class="hero-dot" aria-label="Mostrar León"></button>
-              <button type="button" class="hero-dot" aria-label="Mostrar Masaya"></button>
+              <button type="button" class="hero-dot" aria-label="Mostrar fotografía 1"></button>
+              <button type="button" class="hero-dot" aria-label="Mostrar fotografía 2"></button>
+              <button type="button" class="hero-dot" aria-label="Mostrar fotografía 3"></button>
+              <button type="button" class="hero-dot" aria-label="Mostrar fotografía 4"></button>
             </div>
-            <button type="button" class="hero-next" id="heroNext" aria-label="Mostrar otra ciudad">
+            <button type="button" class="hero-next" id="heroNext" aria-label="Mostrar otra fotografía">
               <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
             </button>
           </div>
@@ -231,7 +227,7 @@
       </section>
     </main>
 
-    <footer><span>GeoCampo · Ingeniería Civil</span><span>v0.3 · GPS + mapa + evidencia visual</span></footer>
+    <footer><span>GeoCampo · Ingeniería Civil</span><span>v0.4 · Interfaz de campo</span></footer>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastIcon">✓</span><p id="toastMessage">Registro guardado</p></div>
