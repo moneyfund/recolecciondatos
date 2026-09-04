@@ -1,13 +1,46 @@
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
+
     function isSignedIn() {
       return request.auth != null;
     }
 
-    match /field-records/{userId}/{allPaths=**} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == userId;
+    function isAdmin() {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isImage() {
+      return request.resource != null
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    function validImageSize() {
+      return request.resource != null
+        && request.resource.size <= 15 * 1024 * 1024;
+    }
+
+    match /field-records/{userId}/{recordId}/{fileName} {
+      allow read: if isAdmin()
+        || (isSignedIn() && request.auth.uid == userId);
+
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && isImage()
+        && validImageSize();
+
+      allow update: if isAdmin()
+        && isImage()
+        && validImageSize();
+
+      allow delete: if isAdmin();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
