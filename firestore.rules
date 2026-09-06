@@ -44,8 +44,10 @@ service cloud.firestore {
           && request.resource.data.userId == resource.data.userId
         );
 
-      // Para preservar la evidencia, solo un administrador puede eliminar.
-      allow delete: if isAdmin();
+      // Durante la depuración de la base de campo, cualquier integrante
+      // autenticado del equipo puede eliminar registros de prueba, aunque
+      // hayan sido creados por otro usuario.
+      allow delete: if isSignedIn();
     }
 
     match /{document=**} {
