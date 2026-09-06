@@ -1,6 +1,7 @@
 import { auth, db, storage } from './firebase.js';
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -8,6 +9,7 @@ import {
   setDoc
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import {
+  deleteObject,
   getDownloadURL,
   ref,
   uploadBytes
@@ -109,6 +111,32 @@ export async function saveRecordToCloud(record, photoDataUrl) {
 
   await setDoc(doc(db, 'records', record.id), payload);
   return { ...cleanPayload, imageUrl };
+}
+
+export async function deleteRecordFromCloud(recordId) {
+  const user = await waitForAuthReady();
+  if (!user) throw new Error('AUTH_REQUIRED');
+
+  const role = await getCurrentRole();
+  if (role !== 'admin') throw new Error('ADMIN_REQUIRED');
+
+  const recordRef = doc(db, 'records', recordId);
+  const snapshot = await getDoc(recordRef);
+  if (!snapshot.exists()) return { deleted: false, reason: 'not-found' };
+
+  const record = snapshot.data();
+  const imagePath = record.imagePath || (record.userId ? `field-records/${record.userId}/${recordId}/evidencia.jpg` : '');
+
+  if (imagePath) {
+    try {
+      await deleteObject(ref(storage, imagePath));
+    } catch (error) {
+      if (error?.code !== 'storage/object-not-found') throw error;
+    }
+  }
+
+  await deleteDoc(recordRef);
+  return { deleted: true };
 }
 
 function normalizeRecord(snapshot) {
