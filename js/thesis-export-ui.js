@@ -33,7 +33,7 @@ async function freshRecords() {
   const cloud = await fetchRecordsFromCloud();
   const ids = new Set(cloud.map(record => record.id));
   const pending = localRecords().filter(record => !ids.has(record.id) && record.syncStatus !== 'synced');
-  return [...cloud, ...pending].sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+  return [...cloud, ...pending].sort((a, b) => String(a.createdAt || a.createdAtServer || '').localeCompare(String(b.createdAt || b.createdAtServer || '')));
 }
 
 function setBusy(active, activeButton = null, text = '') {
@@ -47,19 +47,28 @@ function setBusy(active, activeButton = null, text = '') {
 }
 
 function resetLabels() {
-  if (excelBtn) excelBtn.innerHTML = '<span class="export-icon">XLSX</span><span><strong>Excel para tesis</strong><small>Hojas compatibles con Libro Maestro</small></span>';
-  if (packageBtn) packageBtn.innerHTML = '<span class="export-icon photo">ZIP</span><span><strong>Paquete + fotografías</strong><small>Excel y fotos originales</small></span>';
+  if (excelBtn) excelBtn.innerHTML = '<span class="export-icon">XLSX</span><span><strong>Excel visual + fotos</strong><small>Miniaturas incrustadas y tablas de tesis</small></span>';
+  if (packageBtn) packageBtn.innerHTML = '<span class="export-icon photo">ZIP</span><span><strong>Paquete completo de evidencias</strong><small>Excel visual + fotos originales verificadas</small></span>';
 }
 
 function progressHandler(button) {
   return progress => {
     if (!button) return;
-    if (progress.stage === 'libraries') button.textContent = 'Preparando exportación…';
-    else if (progress.stage === 'photos') button.textContent = `Recuperando fotos ${progress.current}/${progress.total}…`;
-    else if (progress.stage === 'workbook') button.textContent = 'Generando Excel…';
-    else if (progress.stage === 'zip') button.textContent = 'Preparando paquete ZIP…';
+    if (progress.stage === 'libraries') button.textContent = 'Preparando motor de exportación…';
+    else if (progress.stage === 'photos') button.textContent = `Procesando fotografías ${progress.current}/${progress.total}…`;
+    else if (progress.stage === 'workbook') button.textContent = 'Construyendo Excel visual…';
+    else if (progress.stage === 'zip') button.textContent = 'Armando paquete de evidencias…';
     else if (progress.stage === 'zip-progress') button.textContent = `Comprimiendo ${Math.round(progress.percent || 0)}%…`;
   };
+}
+
+function photoSummary(result) {
+  const expected = Number(result.expectedPhotos || 0);
+  const included = Number(result.photos || 0);
+  const missing = Number(result.missingPhotos || 0);
+  if (!expected) return ' No había fotografías asociadas a los registros.';
+  if (!missing && included === expected) return ` Fotografías verificadas: ${included}/${expected}.`;
+  return ` Fotografías verificadas: ${included}/${expected}; ${missing} no pudieron recuperarse.`;
 }
 
 async function beginExport(mode) {
@@ -81,13 +90,10 @@ async function beginExport(mode) {
 
     if (mode === 'package') {
       const result = await exportThesisPackage(records, { onProgress: progressHandler(button) });
-      const suffix = result.missingPhotos
-        ? ` ${result.missingPhotos} fotografía(s) no pudieron recuperarse y quedaron reportadas en el paquete.`
-        : ' Todas las fotografías disponibles fueron incluidas.';
-      showToast(`Paquete de tesis generado con ${result.records} registros y ${result.photos} fotografías.${suffix}`, 6500);
+      showToast(`Paquete completo generado con ${result.records} registros.${photoSummary(result)}`, 7000);
     } else {
       const result = await exportThesisWorkbook(records, { onProgress: progressHandler(button) });
-      showToast(`Excel de tesis generado con ${result.records} registros.`, 4500);
+      showToast(`Excel visual generado con ${result.records} registros y miniaturas incrustadas.${photoSummary(result)}`, 6500);
     }
   } catch (error) {
     console.error('GeoCampo: error en exportación de tesis', error);
@@ -95,8 +101,8 @@ async function beginExport(mode) {
       ? 'No hay registros para exportar.'
       : error?.code === 'permission-denied'
         ? 'Firebase no permitió consultar todos los registros. Revisa las reglas publicadas.'
-        : 'No se pudo generar la exportación. Verifica internet y vuelve a intentarlo.';
-    showToast(message, 5500);
+        : 'No se pudo generar la exportación. Abre la consola del navegador para ver el detalle y vuelve a intentarlo.';
+    showToast(message, 6000);
   } finally {
     setBusy(false);
     resetLabels();
