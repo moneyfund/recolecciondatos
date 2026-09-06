@@ -1,10 +1,9 @@
 import './auth-gate.js';
 import './cloud-sync.js';
-import { deleteRecordFromCloud, getCurrentRole } from './cloud-data.js';
+import { deleteRecordFromCloud } from './cloud-data.js';
 
 const STORAGE_KEY = 'geocampo_records_v01';
 const $ = (id) => document.getElementById(id);
-let currentRole = null;
 let deletingRecordId = null;
 
 const els = {
@@ -96,6 +95,10 @@ function filteredRecords() {
   }).reverse();
 }
 
+function canDeleteRecords() {
+  return Boolean(window.GeoCampoAuth?.isAuthenticated?.());
+}
+
 function renderTable() {
   const all = getRecords();
   updateStats(all);
@@ -106,7 +109,7 @@ function renderTable() {
 
   records.forEach(record => {
     const image = record.photoDataUrl || record.imageUrl || '';
-    const canDelete = currentRole === 'admin';
+    const canDelete = canDeleteRecords();
     const isDeleting = deletingRecordId === record.id;
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -125,13 +128,16 @@ function renderTable() {
 }
 
 async function deleteRecord(id) {
-  if (currentRole !== 'admin' || deletingRecordId) return;
+  if (!canDeleteRecords() || deletingRecordId) {
+    window.GeoCampoAuth?.openLogin?.('Inicia sesión para eliminar registros de prueba.');
+    return;
+  }
   const record = getRecords().find(r => r.id === id);
   if (!record) return;
 
   const author = record.userName || record.userEmail || 'otro usuario';
   const confirmed = window.confirm(
-    `¿Eliminar definitivamente el registro ${id}?\n\nTipo: ${record.type || 'Sin tipo'}\nAutor: ${author}\n\nEsta acción eliminará el registro de Firebase y también su evidencia fotográfica. No se puede deshacer.`
+    `¿Eliminar definitivamente el registro ${id}?\n\nTipo: ${record.type || 'Sin tipo'}\nAutor: ${author}\n\nEsta acción eliminará el registro y su evidencia fotográfica. No se puede deshacer.`
   );
   if (!confirmed) return;
 
@@ -144,9 +150,11 @@ async function deleteRecord(id) {
     showToast(`Registro ${id} eliminado correctamente`);
   } catch (error) {
     console.error('GeoCampo: no se pudo eliminar el registro', id, error);
-    const message = error?.message === 'ADMIN_REQUIRED'
-      ? 'Solo un administrador puede eliminar registros'
-      : 'No se pudo eliminar el registro. Verifica la conexión y los permisos.';
+    const message = error?.message === 'AUTH_REQUIRED'
+      ? 'Debes iniciar sesión para eliminar registros'
+      : error?.code === 'permission-denied' || error?.code === 'storage/unauthorized'
+        ? 'Firebase todavía no permite eliminar. Deben publicarse las reglas actualizadas.'
+        : 'No se pudo eliminar el registro. Verifica la conexión.';
     showToast(message);
   } finally {
     deletingRecordId = null;
@@ -189,7 +197,7 @@ function openDetail(id) {
         <div><span>HORA</span><strong>${escapeHtml(record.time)}</strong></div>
         <div><span>USUARIO</span><strong>${escapeHtml(record.userName || record.userEmail || 'No indicado')}</strong></div>
       </div>
-      ${currentRole === 'admin' ? `<div class="detail-actions"><button class="delete-btn detail-delete-btn" data-id="${escapeHtml(record.id)}">Eliminar este registro</button></div>` : ''}
+      ${canDeleteRecords() ? `<div class="detail-actions"><button class="delete-btn detail-delete-btn" data-id="${escapeHtml(record.id)}">Eliminar este registro</button></div>` : ''}
     </div>`;
   const dialogDelete = els.dialogContent.querySelector('.detail-delete-btn');
   if (dialogDelete) dialogDelete.addEventListener('click', () => deleteRecord(dialogDelete.dataset.id));
@@ -232,11 +240,5 @@ els.exportBtn.addEventListener('click', () => {
   showToast('Archivo compatible con Excel exportado');
 });
 
-async function refreshRoleAndRender() {
-  currentRole = await getCurrentRole();
-  renderTable();
-}
-
-document.addEventListener('geocampo:authchange', refreshRoleAndRender);
+document.addEventListener('geocampo:authchange', renderTable);
 renderTable();
-refreshRoleAndRender();
