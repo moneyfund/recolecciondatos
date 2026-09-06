@@ -10,6 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/styles.css" />
   <link rel="stylesheet" href="./css/admin.css" />
+  <style>
+    .thesis-export-card{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(330px,.75fr);gap:28px;align-items:center;background:linear-gradient(135deg,#071a33 0%,#0d315d 58%,#15556d 100%);border-radius:20px;padding:25px 27px;margin-bottom:18px;color:#fff;box-shadow:0 18px 45px rgba(7,26,51,.14);position:relative;overflow:hidden}.thesis-export-card:after{content:"";position:absolute;width:320px;height:320px;border-radius:50%;right:-150px;top:-170px;background:radial-gradient(circle,rgba(72,203,185,.20),transparent 70%);pointer-events:none}.thesis-export-copy,.thesis-export-actions{position:relative;z-index:1}.thesis-export-card .eyebrow{color:#8fd7d0}.thesis-export-card h2{margin:0;font-size:23px;letter-spacing:-.04em}.thesis-export-card p{margin:8px 0 0;color:#c7d5e5;font-size:11px;line-height:1.6;max-width:760px}.export-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:15px}.export-tags span{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.07);padding:5px 8px;border-radius:999px;font-size:8px;font-weight:800;color:#dce8f4}.export-note{display:block;margin-top:13px;color:#8fa8c2;font-size:8.8px;line-height:1.5}.thesis-export-actions{display:grid;gap:9px}.export-choice{width:100%;display:grid;grid-template-columns:48px 1fr;align-items:center;gap:12px;text-align:left;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#fff;border-radius:15px;padding:12px 14px;cursor:pointer;transition:.2s;backdrop-filter:blur(8px)}.export-choice:hover{transform:translateY(-1px);background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.26)}.export-choice.primary{background:#fff;color:#071a33;border-color:#fff}.export-choice.primary:hover{background:#f5fbff}.export-choice:disabled{opacity:.65;cursor:wait;transform:none}.export-choice>span:last-child{display:block;min-width:0}.export-choice strong,.export-choice small{display:block}.export-choice strong{font-size:10.5px}.export-choice small{font-size:8.5px;margin-top:3px;color:#a9bfd4}.export-choice.primary small{color:#668198}.export-icon{width:44px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.13);font-size:8px;font-weight:900;letter-spacing:.05em}.export-choice.primary .export-icon{background:#e9f3fb;border-color:#d9e8f4;color:#1e568c}.export-choice.primary .export-icon.photo{background:#e5f6f3;border-color:#d4ede8;color:#167f76}.thesis-export-actions>p{margin:2px 2px 0;font-size:8.5px;color:#87a1bc;line-height:1.45}.header-actions{flex-wrap:wrap}@media(max-width:1000px){.thesis-export-card{grid-template-columns:1fr}.thesis-export-actions{grid-template-columns:1fr 1fr}.thesis-export-actions>p{grid-column:1/-1}}@media(max-width:700px){.thesis-export-card{padding:21px 17px;border-radius:18px}.thesis-export-card h2{font-size:20px}.thesis-export-actions{grid-template-columns:1fr}.thesis-export-actions>p{grid-column:auto}.export-tags{display:none}}
+  </style>
 </head>
 <body>
   <div class="admin-shell">
@@ -22,6 +25,7 @@
       <nav>
         <a class="active" href="#overview"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/></svg><span>Resumen</span></a>
         <a href="#records"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h5"/></svg><span>Registros</span></a>
+        <a href="#thesis-export"><svg viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5zM15 3v5h5M8 13h8M8 17h5"/></svg><span>Exportación tesis</span></a>
         <a href="./index.html"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg><span>Modo campo</span></a>
       </nav>
       <div class="sidebar-foot"><span class="status-mini"><i></i> Operación local</span><small>Firebase pendiente de configurar</small></div>
@@ -29,7 +33,7 @@
 
     <main class="admin-main">
       <header class="admin-header">
-        <div><span class="eyebrow">CONTROL DE LEVANTAMIENTO</span><h1>Panel administrativo</h1><p>Consulta, filtra y exporta la información recolectada en campo.</p></div>
+        <div><span class="eyebrow">CONTROL DE LEVANTAMIENTO</span><h1>Panel administrativo</h1><p>Consulta, depura y prepara la información recolectada para el Libro Maestro de la tesis.</p></div>
         <div class="header-actions"><a href="./index.html" class="btn btn-secondary">+ Nuevo registro</a><button id="exportBtn" class="btn btn-primary">Exportar CSV</button></div>
       </header>
 
@@ -38,6 +42,21 @@
         <article class="stat-card"><span>Precisión promedio</span><strong id="avgAccuracy">—</strong><small>GPS de registros</small></article>
         <article class="stat-card"><span>Registros hoy</span><strong id="todayRecords">0</strong><small>Actividad del día</small></article>
         <article class="stat-card"><span>Pendientes de nube</span><strong id="pendingRecords">0</strong><small>Sincronización Firebase</small></article>
+      </section>
+
+      <section id="thesis-export" class="thesis-export-card fade-up delay-1">
+        <div class="thesis-export-copy">
+          <span class="eyebrow">INTEGRACIÓN CON LA TESIS</span>
+          <h2>Exportación para Libro Maestro</h2>
+          <p>Genera una base profesional con hojas compatibles con el Libro Maestro. El paquete completo recupera además las fotografías originales y prepara el registro fotográfico georreferenciado.</p>
+          <div class="export-tags"><span>02 Inspección</span><span>03 Señales verticales</span><span>04 Señales horizontales</span><span>05 Puntos críticos</span><span>06 Fotos</span><span>15 Puntos singulares</span></div>
+          <small class="export-note">Los campos no capturados por GeoCampo quedan vacíos; no se inventan variables técnicas ni resultados de riesgo.</small>
+        </div>
+        <div class="thesis-export-actions">
+          <button id="exportThesisBtn" class="export-choice" type="button"></button>
+          <button id="exportPackageBtn" class="export-choice primary" type="button"></button>
+          <p>La exportación actualiza primero la base desde Firebase para incluir los registros del equipo.</p>
+        </div>
       </section>
 
       <section id="records" class="admin-card fade-up delay-1">
@@ -60,5 +79,6 @@
   <dialog id="detailDialog" class="detail-dialog"><button id="closeDialog" class="dialog-close" aria-label="Cerrar">×</button><div id="dialogContent"></div></dialog>
   <div class="toast" id="toast"><span>✓</span><p id="toastMessage">Exportación preparada</p></div>
   <script type="module" src="./js/admin.js"></script>
+  <script type="module" src="./js/thesis-export-ui.js"></script>
 </body>
 </html>
