@@ -1,8 +1,11 @@
 import './auth-gate.js';
 import './cloud-sync.js';
+import { deleteRecordFromCloud, getCurrentRole } from './cloud-data.js';
 
 const STORAGE_KEY = 'geocampo_records_v01';
 const $ = (id) => document.getElementById(id);
+let currentRole = null;
+let deletingRecordId = null;
 
 const els = {
   totalRecords: $('totalRecords'),
@@ -26,6 +29,10 @@ function getRecords() {
   catch { return []; }
 }
 
+function setRecords(records) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.isArray(records) ? records : []));
+}
+
 function escapeHtml(value = '') {
   return String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#039;', '"':'&quot;' }[char]));
 }
@@ -34,7 +41,7 @@ function showToast(message) {
   els.toastMessage.textContent = message;
   els.toast.classList.add('show');
   clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => els.toast.classList.remove('show'), 2500);
+  showToast.timer = setTimeout(() => els.toast.classList.remove('show'), 3000);
 }
 
 function getGpsAccuracy(record) {
@@ -99,19 +106,52 @@ function renderTable() {
 
   records.forEach(record => {
     const image = record.photoDataUrl || record.imageUrl || '';
+    const canDelete = currentRole === 'admin';
+    const isDeleting = deletingRecordId === record.id;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><img class="table-thumb" src="${escapeHtml(image)}" alt="Evidencia ${escapeHtml(record.id)}" /></td>
-      <td><span class="record-title">${escapeHtml(record.type)}</span><span class="record-sub">${escapeHtml(record.id)} · ${escapeHtml(record.section || 'Sin tramo')}</span></td>
+      <td><span class="record-title">${escapeHtml(record.type)}</span><span class="record-sub">${escapeHtml(record.id)} · ${escapeHtml(record.section || 'Sin tramo')}</span>${record.userName ? `<span class="record-sub">Por ${escapeHtml(record.userName)}</span>` : ''}</td>
       <td><span class="coord">${Number(record.latitude).toFixed(6)}</span><br><span class="coord">${Number(record.longitude).toFixed(6)}</span><br><span class="record-sub">${positioningLabel(record)}</span></td>
       <td><span class="quality-badge">${accuracyBadge(record)}</span></td>
       <td><span class="state-badge">${escapeHtml(record.status || 'No evaluado')}</span></td>
       <td>${escapeHtml(record.date)}<br><span class="record-sub">${escapeHtml(record.time)}</span></td>
-      <td><button class="view-btn" data-id="${escapeHtml(record.id)}">Ver detalle</button></td>`;
+      <td><div class="row-actions"><button class="view-btn" data-id="${escapeHtml(record.id)}">Ver detalle</button>${canDelete ? `<button class="delete-btn" data-id="${escapeHtml(record.id)}" ${isDeleting ? 'disabled' : ''}>${isDeleting ? 'Eliminando…' : 'Eliminar'}</button>` : ''}</div></td>`;
     els.recordsTable.appendChild(tr);
   });
 
   document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', () => openDetail(btn.dataset.id)));
+  document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteRecord(btn.dataset.id)));
+}
+
+async function deleteRecord(id) {
+  if (currentRole !== 'admin' || deletingRecordId) return;
+  const record = getRecords().find(r => r.id === id);
+  if (!record) return;
+
+  const author = record.userName || record.userEmail || 'otro usuario';
+  const confirmed = window.confirm(
+    `¿Eliminar definitivamente el registro ${id}?\n\nTipo: ${record.type || 'Sin tipo'}\nAutor: ${author}\n\nEsta acción eliminará el registro de Firebase y también su evidencia fotográfica. No se puede deshacer.`
+  );
+  if (!confirmed) return;
+
+  deletingRecordId = id;
+  renderTable();
+  try {
+    await deleteRecordFromCloud(id);
+    setRecords(getRecords().filter(item => item.id !== id));
+    if (els.detailDialog.open) els.detailDialog.close();
+    showToast(`Registro ${id} eliminado correctamente`);
+  } catch (error) {
+    console.error('GeoCampo: no se pudo eliminar el registro', id, error);
+    const message = error?.message === 'ADMIN_REQUIRED'
+      ? 'Solo un administrador puede eliminar registros'
+      : 'No se pudo eliminar el registro. Verifica la conexión y los permisos.';
+    showToast(message);
+  } finally {
+    deletingRecordId = null;
+    renderTable();
+  }
 }
 
 function detailValue(value, digits = null) {
@@ -147,8 +187,12 @@ function openDetail(id) {
         <div><span>SENTIDO</span><strong>${escapeHtml(record.direction || 'No indicado')}</strong></div>
         <div><span>FECHA</span><strong>${escapeHtml(record.date)}</strong></div>
         <div><span>HORA</span><strong>${escapeHtml(record.time)}</strong></div>
+        <div><span>USUARIO</span><strong>${escapeHtml(record.userName || record.userEmail || 'No indicado')}</strong></div>
       </div>
+      ${currentRole === 'admin' ? `<div class="detail-actions"><button class="delete-btn detail-delete-btn" data-id="${escapeHtml(record.id)}">Eliminar este registro</button></div>` : ''}
     </div>`;
+  const dialogDelete = els.dialogContent.querySelector('.detail-delete-btn');
+  if (dialogDelete) dialogDelete.addEventListener('click', () => deleteRecord(dialogDelete.dataset.id));
   els.detailDialog.showModal();
 }
 
@@ -188,5 +232,11 @@ els.exportBtn.addEventListener('click', () => {
   showToast('Archivo compatible con Excel exportado');
 });
 
-document.addEventListener('geocampo:authchange', renderTable);
+async function refreshRoleAndRender() {
+  currentRole = await getCurrentRole();
+  renderTable();
+}
+
+document.addEventListener('geocampo:authchange', refreshRoleAndRender);
 renderTable();
+refreshRoleAndRender();
