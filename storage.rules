@@ -39,8 +39,9 @@ service firebase.storage {
         && isImage()
         && validImageSize();
 
-      // Solo un administrador puede eliminar evidencia.
-      allow delete: if isAdmin();
+      // Durante la depuración de registros, cualquier integrante autenticado
+      // puede eliminar la evidencia vinculada a un registro de prueba.
+      allow delete: if isSignedIn();
     }
 
     match /{allPaths=**} {
